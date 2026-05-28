@@ -16,7 +16,7 @@ async function ErrorContent({
         </p>
       ) : (
         <p className="text-sm text-muted-foreground">
-          An unspecified error occurred.
+          Wystąpił nieokreślony błąd.
         </p>
       )}
     </>
@@ -35,7 +35,7 @@ export default function Page({
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">
-                Sorry, something went wrong.
+                Przepraszamy, coś poszło nie tak.
               </CardTitle>
             </CardHeader>
             <CardContent>

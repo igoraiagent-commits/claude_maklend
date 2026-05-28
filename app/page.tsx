@@ -1,58 +1,107 @@
-import { DeployButton } from "@/components/deploy-button";
-import { EnvVarWarning } from "@/components/env-var-warning";
-import { AuthButton } from "@/components/auth-button";
-import { Hero } from "@/components/hero";
-import { ThemeSwitcher } from "@/components/theme-switcher";
-import { ConnectSupabaseSteps } from "@/components/tutorial/connect-supabase-steps";
-import { SignUpUserSteps } from "@/components/tutorial/sign-up-user-steps";
-import { hasEnvVars } from "@/lib/utils";
-import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { ListingGrid } from "@/components/listings/listing-grid"
+import { CategoryCard } from "@/components/listings/category-card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { getFeaturedListings } from "@/lib/queries/listings"
+import { getCategoriesWithCount } from "@/lib/queries/categories"
 
-export default function Home() {
+async function CategoriesSection() {
+  const categories = await getCategoriesWithCount()
   return (
-    <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
-        <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-            <div className="flex gap-5 items-center font-semibold">
-              <Link href={"/"}>Next.js Supabase Starter</Link>
-              <div className="flex items-center gap-2">
-                <DeployButton />
-              </div>
-            </div>
-            {!hasEnvVars ? (
-              <EnvVarWarning />
-            ) : (
-              <Suspense>
-                <AuthButton />
-              </Suspense>
-            )}
-          </div>
-        </nav>
-        <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
-          <Hero />
-          <main className="flex-1 flex flex-col gap-6 px-4">
-            <h2 className="font-medium text-xl mb-4">Next steps</h2>
-            {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
-          </main>
-        </div>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+      {categories.slice(0, 10).map((cat) => (
+        <CategoryCard key={cat.id} {...cat} />
+      ))}
+    </div>
+  )
+}
 
-        <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
-          <p>
-            Powered by{" "}
-            <a
-              href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-              target="_blank"
-              className="font-bold hover:underline"
-              rel="noreferrer"
-            >
-              Supabase
-            </a>
-          </p>
-          <ThemeSwitcher />
-        </footer>
+function CategoriesSkeleton() {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <Skeleton key={i} className="h-24 rounded-xl" />
+      ))}
+    </div>
+  )
+}
+
+async function FeaturedSection() {
+  const featured = await getFeaturedListings()
+
+  if (featured.length === 0) {
+    return (
+      <section className="container mx-auto px-4 py-8 pb-16 text-center text-muted-foreground">
+        <p className="mb-4">Nie ma jeszcze ogłoszeń. Bądź pierwszy!</p>
+        <Button asChild>
+          <Link href="/dashboard/listings/new">Dodaj ogłoszenie</Link>
+        </Button>
+      </section>
+    )
+  }
+
+  return (
+    <section className="container mx-auto px-4 py-8 pb-16">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold">Popularne ogłoszenia</h2>
+        <Link href="/listings" className="text-sm text-primary hover:underline">Wszystkie ogłoszenia</Link>
       </div>
-    </main>
-  );
+      <ListingGrid listings={featured} />
+    </section>
+  )
+}
+
+function FeaturedSkeleton() {
+  return (
+    <section className="container mx-auto px-4 py-8 pb-16">
+      <Skeleton className="h-8 w-64 mb-6" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-64 rounded-xl" />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <div>
+      {/* Hero */}
+      <section className="bg-gradient-to-b from-primary/5 to-background py-16 px-4">
+        <div className="container mx-auto text-center max-w-2xl">
+          <h1 className="text-4xl font-bold mb-4">Wynajem rzeczy między ludźmi</h1>
+          <p className="text-muted-foreground text-lg mb-8">
+            Znajdź i wynajmij narzędzia, sprzęt, akcesoria sportowe i wiele innych rzeczy w swojej okolicy
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button asChild size="lg">
+              <Link href="/listings">Znajdź rzecz</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/dashboard/listings/new">Dodaj ogłoszenie</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Categories */}
+      <section className="container mx-auto px-4 py-12">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Kategorie</h2>
+          <Link href="/categories" className="text-sm text-primary hover:underline">Wszystkie kategorie</Link>
+        </div>
+        <Suspense fallback={<CategoriesSkeleton />}>
+          <CategoriesSection />
+        </Suspense>
+      </section>
+
+      {/* Featured listings */}
+      <Suspense fallback={<FeaturedSkeleton />}>
+        <FeaturedSection />
+      </Suspense>
+    </div>
+  )
 }
