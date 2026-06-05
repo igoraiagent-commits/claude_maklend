@@ -20,7 +20,6 @@ export function FilterSidebar({ categories }: Props) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const [city, setCity] = useState(searchParams.get("city") ?? "")
   const [q, setQ] = useState(searchParams.get("q") ?? "")
   const [price, setPrice] = useState<[number, number]>([
     Number(searchParams.get("min") ?? 0),
@@ -29,7 +28,6 @@ export function FilterSidebar({ categories }: Props) {
   const [category, setCategory] = useState(searchParams.get("category") ?? "")
 
   useEffect(() => {
-    setCity(searchParams.get("city") ?? "")
     setQ(searchParams.get("q") ?? "")
     setPrice([
       Number(searchParams.get("min") ?? 0),
@@ -42,7 +40,6 @@ export function FilterSidebar({ categories }: Props) {
     const params = new URLSearchParams()
     if (q) params.set("q", q)
     if (category) params.set("category", category)
-    if (city) params.set("city", city)
     if (price[0] > 0) params.set("min", String(price[0]))
     if (price[1] < MAX_PRICE) params.set("max", String(price[1]))
     const sort = searchParams.get("sort")
@@ -53,7 +50,6 @@ export function FilterSidebar({ categories }: Props) {
   function reset() {
     setQ("")
     setCategory("")
-    setCity("")
     setPrice([0, MAX_PRICE])
     router.replace(pathname)
   }
@@ -93,11 +89,7 @@ export function FilterSidebar({ categories }: Props) {
 
       <div>
         <Label className="mb-2 block">Miasto</Label>
-        <Input
-          placeholder="Wrocław, Warszawa..."
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-        />
+        <p className="text-sm px-2 py-1.5 rounded-md bg-muted text-muted-foreground">Wrocław</p>
       </div>
 
       <div>

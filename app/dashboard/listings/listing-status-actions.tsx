@@ -3,7 +3,18 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { publishListing, pauseListing, archiveListing } from "@/lib/actions/listings"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { publishListing, pauseListing, archiveListing, deleteListing } from "@/lib/actions/listings"
 
 export function ListingStatusActions({ id, status }: { id: string; status: string }) {
   const [loading, setLoading] = useState(false)
@@ -18,6 +29,14 @@ export function ListingStatusActions({ id, status }: { id: string; status: strin
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleDelete() {
+    setLoading(true)
+    const result = await deleteListing(id)
+    setLoading(false)
+    if (result.error) toast.error(result.error)
+    else toast.success("Ogłoszenie usunięte")
   }
 
   return (
@@ -42,6 +61,27 @@ export function ListingStatusActions({ id, status }: { id: string; status: strin
           Archiwum
         </Button>
       )}
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button size="sm" variant="destructive" disabled={loading}>
+            Usuń
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Usunąć ogłoszenie?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta akcja jest nieodwracalna. Ogłoszenie oraz wszystkie jego zdjęcia zostaną trwale usunięte.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Usuń
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

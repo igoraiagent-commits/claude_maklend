@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function ListingForm({ categories, listing, existingImages }: Props) {
+  const router = useRouter()
   const [images, setImages] = useState<string[]>(
     existingImages?.map((i) => i.storage_path) ?? []
   )
@@ -54,7 +56,13 @@ export function ListingForm({ categories, listing, existingImages }: Props) {
         await updateListing(listing.id, values, images)
         toast.success("Ogłoszenie zaktualizowane")
       } else {
-        await createListing(values, images)
+        const result = await createListing(values, images)
+        if (result.error) {
+          toast.error(result.error)
+        } else {
+          toast.success("Ogłoszenie utworzone")
+          router.push("/dashboard/listings")
+        }
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Błąd")

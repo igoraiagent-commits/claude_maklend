@@ -1,15 +1,17 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { generateSlug } from "@/lib/utils/slug"
 import type { ListingFormValues } from "@/lib/validators/listing"
 
-export async function createListing(values: ListingFormValues, imageUrls: string[]) {
+export async function createListing(
+  values: ListingFormValues,
+  imageUrls: string[]
+): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Brak autoryzacji")
+  if (!user) return { error: "Brak autoryzacji" }
 
   const slug = generateSlug(values.title)
 
@@ -33,7 +35,7 @@ export async function createListing(values: ListingFormValues, imageUrls: string
     .select()
     .single()
 
-  if (error) throw new Error(error.message)
+  if (error) return { error: error.message }
 
   if (imageUrls.length > 0) {
     await supabase.from("listing_images").insert(
@@ -46,7 +48,7 @@ export async function createListing(values: ListingFormValues, imageUrls: string
   }
 
   revalidatePath("/dashboard/listings")
-  redirect(`/dashboard/listings/${listing.id}/edit`)
+  return {}
 }
 
 export async function updateListing(id: string, values: ListingFormValues, imageUrls: string[]) {
@@ -132,4 +134,22 @@ export async function archiveListing(id: string) {
 
   if (error) throw new Error(error.message)
   revalidatePath("/dashboard/listings")
+}
+
+export async function deleteListing(id: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Brak autoryzacji" }
+
+  await supabase.from("listing_images").delete().eq("listing_id", id)
+
+  const { error } = await supabase
+    .from("listings")
+    .delete()
+    .eq("id", id)
+    .eq("owner_id", user.id)
+
+  if (error) return { error: error.message }
+  revalidatePath("/dashboard/listings")
+  return {}
 }
